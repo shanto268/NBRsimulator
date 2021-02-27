@@ -51,8 +51,8 @@ class NBResonator():
                       a = 1.,
                       alpha = 0.,
                       delay = 0.)
-#        self.signal = self.complex_noise + self.port1._S11_directrefl(self.f,**kwargs)
-        self.signal = self.port1._S11_directrefl(self.f,**kwargs)
+        self.signal = self.complex_noise + self.port1._S11_directrefl(self.f,**kwargs)
+#        self.signal = self.port1._S11_directrefl(self.f,**kwargs)
         self.dParams = {'fd': self.f,
                         'f0': self.f0,
                         'Qt': self.Qt,
