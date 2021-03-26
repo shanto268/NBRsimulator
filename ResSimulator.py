@@ -8,17 +8,18 @@ Created on Thu Apr  2 12:50:59 2020
 
 from fitTools.Resonator import Resonator
 import numpy as np
+from scipy.signal import butter,lfilter
 
 
 class NBResonator():
     
-    def __init__(self,trapper,L=1e-9,C=0.7e-12,photonRO=1,Qi=5e4,Qe=5e4,sampleRate=300e6,delKappa = -0.5):
+    def __init__(self,trapper,L=1e-9,C=0.7e-12,photonRO=1,photonNoise=0.5,Qi=5e4,Qe=5e4,sampleRate=300e6,delKappa = -0.5,fd=None):
         self.port1 = Resonator('R')
         self.N = trapper.N
         self.Lj0 = trapper.Lj0
         self.Lj = trapper.Lj
         self.f0 = 1/(2*np.pi*np.sqrt((L + self.Lj)*C))
-        self.q0 = self.Lj0/(L+self.Lj0)
+        self.q0 = self.Lj/(L+self.Lj)
         self.photonRO = photonRO
         self.Qi = Qi
         self.Qe = Qe
@@ -29,10 +30,12 @@ class NBResonator():
         self.fwhm = self.f0/self.Qt
         self.diameter = 2*self.Qt/self.Qe
         self.f = self.f0 + delKappa*self.kappa/(2*np.pi) # the resonator drive frequency for measurement
+        if fd != None:
+            self.f = fd
         self.f_form = self.f0 - (self.q0*self.f0*self.Lj*np.array(trapper.freqFactors)/2)
         self.f_shift = self.q0*self.f0*self.Lj*trapper.L1/2
 #        self.SNR = photonRO*self.kappa/(4*sampleRate)*(1 - 4*self.Qt/self.Qe * (1-self.Qt/self.Qe))
-        self.pSNR = photonRO*self.kappa**2/(4*self.kappa_e*sampleRate)
+        self.pSNR = photonRO*self.kappa**2/(4*self.kappa_e*(0.5+photonNoise)*sampleRate)
         self.pSNRdB = 10*np.log10(self.pSNR)
         
 #        self.sigma = self.diameter/(2*np.sqrt(2*self.SNR))
@@ -51,7 +54,9 @@ class NBResonator():
                       a = 1.,
                       alpha = 0.,
                       delay = 0.)
-        self.signal = self.complex_noise + self.port1._S11_directrefl(self.f,**kwargs)
+        signal = self.port1._S11_directrefl(self.f,**kwargs)
+        self.signal = self.butter_lowpass_filter(signal - signal[0],self.kappa,self.sampleRate)+signal[0]
+        self.signal += self.complex_noise
 #        self.signal = self.port1._S11_directrefl(self.f,**kwargs)
         self.dParams = {'fd': self.f,
                         'f0': self.f0,
@@ -69,6 +74,17 @@ class NBResonator():
                         'SNR': self.pSNR,
                         'SNRdB': self.pSNRdB,
                         'sigma': self.sigma}
+        
+    def butter_lowpass(self,cutoff, fs, order=1):
+        nyq = 0.5 * fs
+        normal_cutoff = cutoff / nyq
+        b, a = butter(order, normal_cutoff, btype='low', analog=False)
+        return b, a
+    
+    def butter_lowpass_filter(self,data, cutoff, fs, order=1):
+        b, a = self.butter_lowpass(cutoff, fs, order=order)
+        y = lfilter(b, a, data)
+        return y
         
         
 if __name__ == '__main__':

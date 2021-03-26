@@ -14,7 +14,7 @@ A QP trapping simulator that uses a simplified model:
 """
 # Imports
 #import numpy as np
-from numpy import sin, cos, pi, exp, sqrt, zeros, ones, arange, mean, inf, cumsum, array
+from numpy import sin, cos, pi, exp, sqrt, zeros, ones, arange, mean, inf, cumsum, array,arctanh
 from numpy.random import random, choice, uniform
 from math import factorial
 
@@ -39,19 +39,22 @@ class QPtrapper:
 #        if ((phi // 0.5) % 2):
 #            self.de += pi
         self.cosd = cos(self.de)
+        self.sind2 = sin(self.de)**2
         self.sin4 = sin(self.de/2)**4
         self.sin2 = sin(self.de/2)**2
         self.phi0 = 2.06783383*1e-15 #h/2e
         self.kb = 1.38064852e-23
         self.rphi0 = self.phi0/(2*pi) #hbar/2e
-        self.Ne = 6*(self.rphi0**2)/(self.Delta*Lj)
+        self.Ne = 8*(self.rphi0**2)/(self.Delta*Lj)
         self.Lj0 = Lj
-        self.Lj = Lj/self.cosd
+        self.Lj = Lj/(1-sin(self.de/2)*arctanh(sin(self.de/2)))
+        # self.Lj = Lj/self.cosd
         self.tauCommon = tauCommon
         self.tauRare = tauRare
         self.tauRecomb = tauRecomb
-        alpha = self.Delta/(4*(self.rphi0**2))
-        self.L1 = alpha*(self.cosd + self.sin4)/(sqrt(1-self.sin2)**3)
+        # alpha = self.Delta/(4*(self.rphi0**2))
+        alpha = self.Delta/(2*(self.rphi0**2))
+        self.L1 = alpha*(self.cosd/sqrt(1-self.sin2) + self.sind2/(4*sqrt(1-self.sin2)**3))
         
         self._getSwitchingEvents()
 
@@ -65,7 +68,7 @@ class QPtrapper:
     def _MC_doro(self,Ne=680,delta=2.72370016e-23,de=pi/2,T=0.025):
         scale = self._dorokhov_boltz(0.999999999,Ne,delta,de,T)
         while True:
-            x = 1 - uniform(low=0.0,high=0.15)
+            x = uniform(low=0.0,high=1)
             y = random()*scale
             try:
                 if y < self._dorokhov_boltz(x,Ne,delta,de,T):
@@ -97,7 +100,8 @@ class QPtrapper:
         lFreqFactors = []
         phi0 = self.phi0
         rphi0 = phi0/(2*pi)
-        alpha = self.Delta/(4*(rphi0**2))
+        alpha = self.Delta/(2*(rphi0**2))
+        # alpha = self.Delta/(4*(rphi0**2))
         self.freqFactors = zeros(self.N)
         self.nBulk = list(ones(3))
         self.bulkPop = []
@@ -154,8 +158,7 @@ class QPtrapper:
             self.bulkPop.append(len(self.nBulk))
             
 #            Calculate frequency shift terms for each time point -- Sum_i 1/L_i
-            lFreqFactors.append([alpha*c['t']*(self.cosd + c['t']*self.sin4)/(
-                    sqrt(1-c['t']*self.sin2)**3)for c in trappedChannels])  
+            lFreqFactors.append([alpha*c['t']*(self.cosd/sqrt(1-c['t']*self.sin2) + c['t']*self.sind2/(4*sqrt(1-c['t']*self.sin2)**3))for c in trappedChannels])  
             self.freqFactors[n] += sum(lFreqFactors[n])  
 
 
