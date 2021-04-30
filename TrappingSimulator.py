@@ -105,6 +105,7 @@ class QPtrapper:
         self.freqFactors = zeros(self.N)
         self.nBulk = list(ones(3))
         self.bulkPop = []
+        self.burstIndices = []
         
         for n in range(self.N):
             
@@ -120,6 +121,7 @@ class QPtrapper:
             raremask = random() < pRare
             k = cs[raremask][-1] if raremask.any() else 0
             for _ in range(k):
+                self.burstIndices.append(n)
                 burst = int(random()*50)
                 for i in range(burst):
                     self.nBulk.append(1)
