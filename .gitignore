@@ -1,8 +1,10 @@
 # exclude everything
 .ipynb_checkpoints/*
 __pycache__/*
+notebooks/*
 
-# exclude cache files
+# exclude filetypes
 *.pyc
+*.ipynb
 
 # exception to the rule
