@@ -1,0 +1,8 @@
+# exclude everything
+.ipynb_checkpoints/*
+__pycache__/*
+
+# exclude cache files
+*.pyc
+
+# exception to the rule
