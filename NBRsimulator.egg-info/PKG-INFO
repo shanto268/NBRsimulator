@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: NBRsimulator
+Version: 0.1
+Summary: A simulator for quasiparticle trapping dynamics using nanobridge resonators.
+Author: Sadman Ahmed Shanto, James Farmer
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+License-File: LICENSE
